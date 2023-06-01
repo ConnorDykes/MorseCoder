@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:morse_coder/morse_code_map.dart';
 
 class DecoderView extends StatefulWidget {
   const DecoderView({super.key});
@@ -9,59 +10,14 @@ class DecoderView extends StatefulWidget {
 }
 
 class _DecoderViewState extends State<DecoderView> {
-  Map morseCodeMap = {
-    'A': '.-',
-    'B': '-...',
-    'C': '-.-.',
-    'D': '-..',
-    'E': '.',
-    'F': '..-.',
-    'G': '--.',
-    'H': '....',
-    'I': '..',
-    'J': '.---',
-    'K': '-.-',
-    'L': '.-..',
-    'M': '--',
-    'N': '-.',
-    'O': '---',
-    'P': '.--.',
-    'Q': '--.-',
-    'R': '.-.',
-    'S': '...',
-    'T': '-',
-    'U': '..-',
-    'V': '...-',
-    'W': '.--',
-    'X': '-..-',
-    'Y': '-.--',
-    'Z': '--..',
-    '1': '.----',
-    '2': '..---',
-    '3': '...--',
-    '4': '....-',
-    '5': '.....',
-    '6': '-....',
-    '7': '--...',
-    '8': '---..',
-    '9': '----.',
-    '0': '-----',
-    ', ': '--..--',
-    '.': '.-.-.-',
-    '?': '..--..',
-    '/': '-..-.',
-    '-': '-....-',
-    '(': '-.--.',
-    ')': '-.--.-',
-    "'": ".----.",
-    '"': '.-..-.'
-  };
-
   String decodedMessage = '';
   String code = '';
   List errorMessages = [];
   TextEditingController messageController = TextEditingController();
 
+  // This function takes the string of dots and dashes converts it to english.
+  // It does so by first splitting the words apart then splitting the letters in
+  // each word apart. Finally it loops through each letter and reassembles the string
   decodeMorse() {
     errorMessages.clear();
     Map decodeMap = morseCodeMap.map((k, v) => MapEntry(v, k));
@@ -98,80 +54,9 @@ class _DecoderViewState extends State<DecoderView> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              elevation: 4,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'Decoded Message',
-                      style: theme.textTheme.titleLarge!
-                          .copyWith(color: Colors.green),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          decodedMessage,
-                          style: theme.textTheme.titleLarge,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Visibility(
-            visible: errorMessages.isNotEmpty,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  Text(
-                    'The following sequences are not recognised',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: errorMessages.length,
-                    itemBuilder: (context, index) => Text(
-                      errorMessages[index],
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.titleLarge!
-                          .copyWith(color: Colors.red),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                        border: Border.all(color: theme.disabledColor),
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          code,
-                          style: theme.textTheme.titleLarge,
-                        )),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          DecodedMessage(theme: theme, decodedMessage: decodedMessage),
+          ErrorMessage(errorMessages: errorMessages, theme: theme),
+          InputButtons(theme: theme, code: code),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
@@ -282,6 +167,124 @@ class _DecoderViewState extends State<DecoderView> {
             ],
           )
         ],
+      ),
+    );
+  }
+}
+
+class InputButtons extends StatelessWidget {
+  const InputButtons({
+    super.key,
+    required this.theme,
+    required this.code,
+  });
+
+  final ThemeData theme;
+  final String code;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Container(
+              decoration: BoxDecoration(
+                  border: Border.all(color: theme.disabledColor),
+                  borderRadius: BorderRadius.circular(10)),
+              child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    code,
+                    style: theme.textTheme.titleLarge,
+                  )),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class ErrorMessage extends StatelessWidget {
+  const ErrorMessage({
+    super.key,
+    required this.errorMessages,
+    required this.theme,
+  });
+
+  final List errorMessages;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Visibility(
+      visible: errorMessages.isNotEmpty,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            Text(
+              'The following sequences are not recognised',
+              style: TextStyle(color: Colors.red),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: errorMessages.length,
+              itemBuilder: (context, index) => Text(
+                errorMessages[index],
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleLarge!.copyWith(color: Colors.red),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class DecodedMessage extends StatelessWidget {
+  const DecodedMessage({
+    super.key,
+    required this.theme,
+    required this.decodedMessage,
+  });
+
+  final ThemeData theme;
+  final String decodedMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Card(
+        elevation: 4,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                'Decoded Message',
+                style:
+                    theme.textTheme.titleLarge!.copyWith(color: Colors.green),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    decodedMessage,
+                    style: theme.textTheme.titleLarge,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
